@@ -3,6 +3,10 @@
 # Generic Go Installation & Version Manager for Raspberry Pi
 # Automatically fetches and installs the latest Go version
 # Run anytime to update to the latest version
+#
+# This script provides automated Go language installation and version management
+# for Raspberry Pi and other ARM-based Linux systems. It handles architecture
+# detection, downloads the appropriate binaries, and configures your environment.
 
 set -e
 
