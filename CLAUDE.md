@@ -59,6 +59,16 @@ error() { echo -e "${RED}✗ $1${NC}"; }
 | `go_setup_fixed.sh` | Go language (downloads latest from go.dev) | `~/.go_installed_version` | `~/.go_env.sh` |
 | `postgresql_setup.sh` | PostgreSQL database | `~/.postgresql_installed_version` | `~/.postgresql_env.sh` |
 | `redis_setup.sh` | Redis cache/store | `~/.redis_installed_version` | `~/.redis_env.sh` |
+| `ssh_keys_backup.sh` | Backup/restore SSH keys (encrypted) | N/A | N/A |
+
+### SSH Keys Backup
+
+Special utility script for preserving SSH keys across Pi rebuilds:
+- `./ssh_keys_backup.sh backup` - Encrypt and save keys to `~/ssh_backup/`
+- `./ssh_keys_backup.sh restore` - Decrypt and restore keys
+- `./ssh_keys_backup.sh check` - Show current status
+
+Uses AES-256 encryption via GPG. The encrypted file is safe to store anywhere (USB, cloud, git). You must remember the encryption password.
 
 ## Environment Variables Set
 
