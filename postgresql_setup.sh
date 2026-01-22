@@ -233,6 +233,27 @@ verify_installation() {
     return 0
 }
 
+# Function to show update instructions
+show_update_instructions() {
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    info "How to Update PostgreSQL"
+    echo ""
+    info "As per best practice, run apt commands manually to update system packages:"
+    echo ""
+    echo "  sudo apt-get update"
+    echo "  sudo apt-get upgrade postgresql postgresql-contrib"
+    echo ""
+    info "After updating, rerun this script to verify/reconfigure:"
+    echo ""
+    echo "  ./postgresql_setup.sh"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    exit 0
+}
+
 # Main execution
 main() {
     echo ""
@@ -248,6 +269,25 @@ main() {
 
     if [ -n "$INSTALLED_VERSION" ]; then
         info "PostgreSQL $INSTALLED_VERSION is already installed"
+        echo ""
+        echo "What would you like to do?"
+        echo "  1) Verify and repair existing installation (default)"
+        echo "  2) Show update instructions"
+        echo ""
+        read -p "Enter choice [1-2]: " choice
+
+        case "$choice" in
+            2)
+                show_update_instructions
+                ;;
+            1|"")
+                # Continue with verification/repair
+                ;;
+            *)
+                error "Invalid choice"
+                exit 1
+                ;;
+        esac
 
         # Ensure service is running
         start_postgresql
