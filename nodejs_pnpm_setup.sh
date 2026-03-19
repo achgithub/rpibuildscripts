@@ -139,12 +139,21 @@ install_pnpm() {
 
     info "Current npm version: $npm_version"
 
-    # Install pnpm globally
-    info "Installing pnpm globally..."
+    # Create user npm directory if it doesn't exist
+    mkdir -p "$HOME/.npm-global/bin"
+
+    # Configure npm to use user directory to avoid permission issues
+    npm config set prefix "$HOME/.npm-global" --userconfig="$HOME/.npmrc"
+
+    # Install pnpm globally to user directory
+    info "Installing pnpm globally to $HOME/.npm-global..."
     npm install -g pnpm@latest || {
         error "Failed to install pnpm via npm"
         return 1
     }
+
+    # Ensure pnpm is in PATH
+    export PATH="$HOME/.npm-global/bin:$PATH"
 
     if ! command -v pnpm &> /dev/null; then
         error "pnpm installation failed - binary not in PATH"
