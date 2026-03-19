@@ -281,10 +281,9 @@ main() {
 
     # Check existing Node.js installation
     local existing_node
-    existing_node=$(check_nodejs_installed)
-    local node_status=$?
+    existing_node=$(check_nodejs_installed) || true
 
-    if [ $node_status -eq 0 ] && [ -n "$existing_node" ]; then
+    if [ -n "$existing_node" ]; then
         info "Node.js already installed: $existing_node"
     else
         step "Node.js not found, installing..."
@@ -298,10 +297,9 @@ main() {
 
     # Check existing pnpm installation (pnpm requires Node.js)
     local existing_pnpm
-    existing_pnpm=$(check_pnpm_installed)
-    local pnpm_status=$?
+    existing_pnpm=$(check_pnpm_installed) || true
 
-    if [ $pnpm_status -eq 0 ] && [ -n "$existing_pnpm" ]; then
+    if [ -n "$existing_pnpm" ]; then
         info "pnpm already installed: v$existing_pnpm"
     else
         step "pnpm not found, installing..."
