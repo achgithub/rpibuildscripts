@@ -161,7 +161,7 @@ setup_environment() {
 # PostgreSQL Environment Setup
 # Managed by postgresql_setup.sh
 
-export PGHOST=localhost
+export PGHOST=/var/run/postgresql
 export PGPORT=5432
 export PGUSER=$DEFAULT_DB_USER
 export PGDATABASE=$DEFAULT_DB_NAME
