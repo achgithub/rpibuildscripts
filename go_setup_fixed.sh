@@ -141,22 +141,11 @@ install_go() {
     local download_success=0
     
     if command -v wget &> /dev/null; then
-        if wget --spider "$download_url" 2>/dev/null; then
-            wget -q --show-progress -O "$GO_DOWNLOAD_DIR/${filename}" "$download_url" && download_success=1
-        else
-            error "Download URL not accessible: $download_url"
-            info "This might be due to network issues or invalid architecture"
-            return 1
-        fi
+        step "Downloading with wget..."
+        wget -q --show-progress -O "$GO_DOWNLOAD_DIR/${filename}" "$download_url" && download_success=1
     elif command -v curl &> /dev/null; then
-        # Test if URL exists first
-        if curl --output /dev/null --silent --head --fail "$download_url"; then
-            curl -# -L -o "$GO_DOWNLOAD_DIR/${filename}" "$download_url" && download_success=1
-        else
-            error "Download URL not accessible: $download_url"
-            info "This might be due to network issues or invalid architecture"
-            return 1
-        fi
+        step "Downloading with curl..."
+        curl -# -L -o "$GO_DOWNLOAD_DIR/${filename}" "$download_url" && download_success=1
     else
         error "Neither wget nor curl found. Please install one of them:"
         info "Run: sudo apt-get update && sudo apt-get install wget"
