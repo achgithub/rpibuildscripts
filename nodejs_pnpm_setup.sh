@@ -61,9 +61,11 @@ success "Architecture: $NODE_ARCH"
 # Check if Node.js is already installed
 check_nodejs_installed() {
     if command -v node &> /dev/null; then
-        local installed_version=$(node --version)
-        echo "$installed_version"
-        return 0
+        local installed_version=$(node --version 2>/dev/null)
+        if [ -n "$installed_version" ]; then
+            echo "$installed_version"
+            return 0
+        fi
     fi
     return 1
 }
@@ -71,9 +73,11 @@ check_nodejs_installed() {
 # Check if pnpm is already installed
 check_pnpm_installed() {
     if command -v pnpm &> /dev/null; then
-        local installed_version=$(pnpm --version)
-        echo "$installed_version"
-        return 0
+        local installed_version=$(pnpm --version 2>/dev/null)
+        if [ -n "$installed_version" ]; then
+            echo "$installed_version"
+            return 0
+        fi
     fi
     return 1
 }
@@ -84,11 +88,11 @@ install_nodejs() {
 
     # Update apt
     info "Updating package manager..."
-    sudo apt-get update -qq
+    sudo apt-get update -qq || true
 
     # Install NodeSource repository setup script
     info "Setting up NodeSource repository..."
-    curl -fsSL "https://deb.nodesource.com/setup_${NODEJS_MAJOR_VERSION}.x" | sudo -E bash - || {
+    curl -fsSL "https://deb.nodesource.com/setup_${NODEJS_MAJOR_VERSION}.x" | sudo -E bash - > /dev/null 2>&1 || {
         error "Failed to setup NodeSource repository"
         info "Attempting fallback: direct apt install"
         sudo apt-get install -y nodejs
@@ -97,15 +101,24 @@ install_nodejs() {
 
     # Install Node.js
     info "Installing Node.js..."
-    sudo apt-get install -y nodejs
+    sudo apt-get install -y nodejs || {
+        error "Failed to install Node.js"
+        return 1
+    }
 
     # Verify installation
     if ! command -v node &> /dev/null; then
-        error "Node.js installation failed"
+        error "Node.js installation failed - binary not in PATH"
         return 1
     fi
 
-    success "Node.js installed: $(node --version)"
+    local version=$(node --version 2>/dev/null)
+    if [ -z "$version" ]; then
+        error "Node.js installation failed - cannot execute node binary"
+        return 1
+    fi
+
+    success "Node.js installed: $version"
 }
 
 # Install pnpm globally via npm
@@ -118,18 +131,33 @@ install_pnpm() {
         return 1
     fi
 
-    info "Current npm version: $(npm --version)"
-
-    # Install pnpm globally
-    info "Installing pnpm globally..."
-    npm install -g pnpm@latest
-
-    if ! command -v pnpm &> /dev/null; then
-        error "pnpm installation failed"
+    local npm_version=$(npm --version 2>/dev/null)
+    if [ -z "$npm_version" ]; then
+        error "npm binary exists but cannot be executed"
         return 1
     fi
 
-    success "pnpm installed: $(pnpm --version)"
+    info "Current npm version: $npm_version"
+
+    # Install pnpm globally
+    info "Installing pnpm globally..."
+    npm install -g pnpm@latest || {
+        error "Failed to install pnpm via npm"
+        return 1
+    }
+
+    if ! command -v pnpm &> /dev/null; then
+        error "pnpm installation failed - binary not in PATH"
+        return 1
+    fi
+
+    local pnpm_version=$(pnpm --version 2>/dev/null)
+    if [ -z "$pnpm_version" ]; then
+        error "pnpm installation failed - cannot execute pnpm binary"
+        return 1
+    fi
+
+    success "pnpm installed: $pnpm_version"
 }
 
 # Setup environment variables
@@ -252,23 +280,35 @@ main() {
     echo ""
 
     # Check existing Node.js installation
-    local existing_node=$(check_nodejs_installed)
-    if [ $? -eq 0 ]; then
+    local existing_node
+    existing_node=$(check_nodejs_installed)
+    local node_status=$?
+
+    if [ $node_status -eq 0 ] && [ -n "$existing_node" ]; then
         info "Node.js already installed: $existing_node"
     else
         step "Node.js not found, installing..."
-        install_nodejs || exit 1
+        install_nodejs || {
+            error "Failed to install Node.js"
+            exit 1
+        }
     fi
 
     echo ""
 
-    # Check existing pnpm installation
-    local existing_pnpm=$(check_pnpm_installed)
-    if [ $? -eq 0 ]; then
+    # Check existing pnpm installation (pnpm requires Node.js)
+    local existing_pnpm
+    existing_pnpm=$(check_pnpm_installed)
+    local pnpm_status=$?
+
+    if [ $pnpm_status -eq 0 ] && [ -n "$existing_pnpm" ]; then
         info "pnpm already installed: v$existing_pnpm"
     else
         step "pnpm not found, installing..."
-        install_pnpm || exit 1
+        install_pnpm || {
+            error "Failed to install pnpm"
+            exit 1
+        }
     fi
 
     echo ""
@@ -279,7 +319,10 @@ main() {
     echo ""
 
     # Verify everything
-    verify_installation || exit 1
+    verify_installation || {
+        error "Installation verification failed"
+        exit 1
+    }
 
     echo ""
     echo "╔══════════════════════════════════════════════════════════════╗"
