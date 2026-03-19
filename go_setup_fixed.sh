@@ -142,7 +142,7 @@ install_go() {
     
     if command -v wget &> /dev/null; then
         step "Downloading with wget..."
-        wget -q --show-progress -O "$GO_DOWNLOAD_DIR/${filename}" "$download_url" && download_success=1
+        wget -q --show-progress -L -O "$GO_DOWNLOAD_DIR/${filename}" "$download_url" && download_success=1
     elif command -v curl &> /dev/null; then
         step "Downloading with curl..."
         curl -# -L -o "$GO_DOWNLOAD_DIR/${filename}" "$download_url" && download_success=1
